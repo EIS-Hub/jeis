@@ -74,3 +74,24 @@ def data_driven_init(state, x):
 def dropout(rng, x, rate):
     keep = jax.random.bernoulli(rng, 1 - rate, x.shape)
     return jnp.where(keep, x / (1.0 - rate), 0)
+
+# Noise Injection
+@jax.custom_jvp
+def add_noise(w, key, noise_std):
+    ''' Adds noise only for inference 
+    w: weight [array]
+    key: Pseudo Random Number Generator
+    noise_std: standard deviation of the noise to be injected'''
+    noisy_w = jnp.where(w != 0.0,
+                        w + jax.random.normal(key, w.shape) * jnp.max(jnp.abs(w)) * noise_std,
+                        w)
+    return noisy_w
+
+@add_noise.defjvp
+# custom backward
+def add_noise_jvp(primals, tangents):
+    weight, key, noise_std = primals
+    x_dot, y_dot, z_dot = tangents
+    primal_out = add_noise(weight, key, noise_std)
+    tangent_out = x_dot
+    return primal_out, tangent_out
