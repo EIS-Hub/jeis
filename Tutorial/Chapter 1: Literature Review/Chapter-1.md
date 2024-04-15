@@ -1,4 +1,4 @@
-############## Chapter 1: Literature Review ############################################################
+## Chapter 1: Literature Review 
 
 Reading List to get familiarized with SNNs:
 
