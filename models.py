@@ -16,8 +16,21 @@ def gr_jvp(primals, tangents):
     tangent_out = x_dot / (10 * jnp.absolute(x - thr) + 1)**2
     return primal_out, tangent_out
 
+def lif_forward(state, input_spikes):
+    ''' Vectorized Leaky Integrate and Fire (LIF) neuron model
+    '''
+    w, (i, v, z) = state[0]
+    tau_mem, v_th, timestep = state[1]
+    i = jnp.dot(w, input_spikes)  # + jnp.dot(Wrec, S_h)
+    v = (1 - timestep / tau_mem) * v + i - z * v_th
+    v = jnp.maximum(0, v)
+    z = gr_than(v, v_th)
+
+    return ((w, (i, v, z)), state[1]), (i, v, z)
+
+
 def rlif_forward(state, x):
-    ''' Recurrent Leaky Integrate and Fire (LIF) neuron model
+    ''' Vectorized Recurrent Leaky Integrate and Fire (LIF) neuron model
     '''
     inp_weight, rec_weight, bias, out_weight = state[0]     # Static weights
     thr_rec, thr_out, alpha, kappa = state[1]         # Static neuron states
